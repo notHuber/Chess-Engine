@@ -1,4 +1,5 @@
 import java.util.Scanner;
+class InvalidFenException extends RuntimeException {}
 // using the BitBoards approach (Piece centric representation)
 interface IBoardBitboard {
     void setFen(String fen);
@@ -15,17 +16,51 @@ public class ChessBoard implements IBoardBitboard {
     private long bRook   = 0L;
     private long bKnight = 0L;
     private long bBishop = 0L;
-    private long bQueen  = 0L;;
+    private long bQueen  = 0L;
     private long bKing   = 0L;
 
-    private boolean wCastlingRights = true;
-    private boolean bCastlingRights = true;
-    private boolean fiftyMoveRule = false;
+    //Side to move
+    private boolean whiteToMove;
 
+    //castling rights
+    private boolean wCastlingKingRights;
+    private boolean wCastlingQueenRights;
+    private boolean bCastlingKingRights;
+    private boolean bCastlingQueenRights;
+
+    // 50 move rule, starts at 0
+    private int halfMoveClock;
+
+    // Move counter (for each black move), starts at 1
+    private int fullMoveClock;
+
+    // En passant capture square
+    int enPassantCaptureSquare;
+
+    public enum Files {
+        a(1),
+        b(2),
+        c(3),
+        d(4),
+        e(5),
+        f(6),
+        g(7),
+        h(8);
+
+        public final int file;
+        Files(int column) {
+            this.file = column;
+        }
+    }
 
     //Constructor
     public ChessBoard(String fen){
-        setFen(fen);
+        try{
+            setFen(fen);
+        }catch (Exception e){
+            throw new InvalidFenException();
+        }
+
     }
 
     /*
@@ -35,29 +70,42 @@ public class ChessBoard implements IBoardBitboard {
     @return the updated bitboard
     */
     private long setBitboard(long bitboard, int rankIndex, int fileIndex){ // 0 up to 7 (not from 1 to 8!!)
-        int bitPosition = 8*rankIndex + fileIndex; // Least Significant File mapping (LSF)
+        int bitPosition = lsf(rankIndex, fileIndex); // Least Significant File mapping (LSF)
         bitboard |= 1L << bitPosition;
         return bitboard;
     }
 
+    private int lsf(int rank, int file) {return 8*rank + file;}
 
     //Forsyth-Edwards Notation (FEN)
-    //TODO: update this method to handle castling rights, enpassant moves, Moving privileges
+    //https://www.chessprogramming.org/Forsyth-Edwards_Notation
     public void setFen(String fen){
 
-        Scanner sc = new Scanner(fen).useDelimiter("/");
-        String fenPiece;
+        Scanner tokens = new Scanner(fen);
+        Scanner piecePlacement = new Scanner(tokens.next()).useDelimiter("/");
+        String singleRankPiecePlacement;
+
+        String sideToMove = tokens.next();
+        String castlingAbility = tokens.next();
+        String enPassantTargetSquare = tokens.next();
+        String halfMoveClockSTR = tokens.next();
+        String fullMoveClockSTR = tokens.next();
+        tokens.close();
+
+
+        /*
+            PIECE PLACEMENT (saving pieces position to the corresponding bitboard)
+            O(n^2) complexity
+        */
         int tempRankIndex = 7, tempFileIndex;
+        while(piecePlacement.hasNext() && tempRankIndex >= 0){
 
-        // O(n^2) complexity
-        while(sc.hasNext() && tempRankIndex >= 0){
-
-            fenPiece = sc.next();
+            singleRankPiecePlacement = piecePlacement.next();
             tempFileIndex = 0;
 
-            for (int i = 0; i < fenPiece.length(); i++){
+            for (int i = 0; i < singleRankPiecePlacement.length(); i++){
 
-                char fenChar = fenPiece.charAt(i);
+                char fenChar = singleRankPiecePlacement.charAt(i);
 
                 if (Character.isDigit(fenChar)) {// empty squares
                     int emptySquares = Character.getNumericValue(fenChar);
@@ -111,14 +159,51 @@ public class ChessBoard implements IBoardBitboard {
             }
             tempRankIndex--;
         }
-        sc.close();
+        piecePlacement.close();
+
+
+        // SIDE TO MOVE
+        whiteToMove = sideToMove.equalsIgnoreCase("w");
+
+
+        // CASTLING ABILITY
+        wCastlingKingRights = castlingAbility.contains("K");
+        wCastlingQueenRights = castlingAbility.contains("Q");
+        bCastlingKingRights = castlingAbility.contains("k");
+        bCastlingQueenRights = castlingAbility.contains("q");
+
+
+        // EN PASSANT TARGET SQUARE
+        if (enPassantTargetSquare.equals("-")) enPassantCaptureSquare = -1;
+        else enPassantCaptureSquare = convertCordToSquarePosition(enPassantTargetSquare);
+
+        // HALFMOVE CLOCK & FULLMOVE CLOCK
+        halfMoveClock = Integer.parseInt(halfMoveClockSTR);
+        fullMoveClock = Integer.parseInt(fullMoveClockSTR);
+    }
+
+    // ex. "h8" --> 63
+    public int convertCordToSquarePosition(String coordinate){
+        String columnStr = coordinate.substring(0,1);
+        int file = Files.valueOf(columnStr).file - 1; //because file goes from 0 to 7, not from 1 to 8
+
+        int rank = Integer.parseInt(coordinate.substring(1)) - 1;
+        return lsf(rank,file);
     }
 
 
-
-
     //Debugging stuff
-
+    public void getBoardInfo(){
+        System.out.println("Is white to move : " + whiteToMove);
+        System.out.println("EnPassantSquareIndex (number, not coordinate) : " + enPassantCaptureSquare);
+        System.out.println("Castling Rights" +
+                "\n Queen side castling (white): " + wCastlingQueenRights +
+                "\n King  side castling (white): " + wCastlingKingRights +
+                "\n Queen side castling (black): " + bCastlingQueenRights+
+                "\n King  side castling (black): " + bCastlingKingRights);
+        System.out.println("Halfmove clock: " + halfMoveClock);
+        System.out.println("Fullfmove clock: " + fullMoveClock);
+    }
     /*
     Returns the bitboard formatted like a 64-bit binary number
     Useful for debugging, not that indispensable for the chess program itself.
@@ -145,6 +230,6 @@ public class ChessBoard implements IBoardBitboard {
         System.out.println("bQueen:  " + toBinaryString64(bQueen));
         System.out.println("bKing:   " + toBinaryString64(bKing));
         long bitboardOfAllPieces = wPawn | wRook | wKnight | wBishop | wQueen | wKing | bPawn | bRook | bKnight | bBishop | bQueen | bKing;
-        System.out.println("final board \n" + Long.toBinaryString(bitboardOfAllPieces));
+        System.out.println("Bitboard with every piece: " + Long.toBinaryString(bitboardOfAllPieces));
     }
 }
