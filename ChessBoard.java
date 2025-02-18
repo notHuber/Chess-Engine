@@ -2,7 +2,8 @@ import java.util.Scanner;
 class InvalidFenException extends RuntimeException {}
 // using the BitBoards approach (Piece centric representation)
 interface IBoardBitboard {
-    void setFen(String fen);
+    int convertCordToSquarePosition(String coordinate);
+    String convertSquarePositionToCord(int squareIndex);
 }
 
 public class ChessBoard implements IBoardBitboard {
@@ -79,7 +80,7 @@ public class ChessBoard implements IBoardBitboard {
 
     //Forsyth-Edwards Notation (FEN)
     //https://www.chessprogramming.org/Forsyth-Edwards_Notation
-    public void setFen(String fen){
+    private void setFen(String fen){
 
         Scanner tokens = new Scanner(fen);
         Scanner piecePlacement = new Scanner(tokens.next()).useDelimiter("/");
@@ -189,6 +190,20 @@ public class ChessBoard implements IBoardBitboard {
 
         int rank = Integer.parseInt(coordinate.substring(1)) - 1;
         return lsf(rank,file);
+    }
+
+    // ex. 63 --> "h8"
+    public String convertSquarePositionToCord(int squareIndex){
+        String coordinate = "";
+        int file = squareIndex % 8 + 1;
+        int rank = squareIndex /8 + 1;
+
+        for (Files c : Files.values()){
+            if (c.file != file) continue;
+            coordinate = c.name();
+            break;
+        }
+        return coordinate + rank;
     }
 
 
