@@ -2,29 +2,27 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-class InvalidFenException extends RuntimeException {
-}
+class InvalidFenException extends RuntimeException {}
 
 // using the BitBoards approach (Piece centric representation)
 interface IBoardBitboard {
     int convertCordToSquarePosition(String coordinate);
-
     String convertSquarePositionToCord(int squareIndex);
 }
 
 public class ChessBoard implements IBoardBitboard {
-    private long wPawn = 0L;
-    private long wRook = 0L;
+    private long wPawn   = 0L;
+    private long wRook   = 0L;
     private long wKnight = 0L;
     private long wBishop = 0L;
-    private long wQueen = 0L;
-    private long wKing = 0L;
-    private long bPawn = 0L;
-    private long bRook = 0L;
+    private long wQueen  = 0L;
+    private long wKing   = 0L;
+    private long bPawn   = 0L;
+    private long bRook   = 0L;
     private long bKnight = 0L;
     private long bBishop = 0L;
-    private long bQueen = 0L;
-    private long bKing = 0L;
+    private long bQueen  = 0L;
+    private long bKing   = 0L;
 
     // Side to move
     private boolean whiteToMove;
@@ -87,8 +85,9 @@ public class ChessBoard implements IBoardBitboard {
     }
 
     private int lsf(int rank, int file) {
-        return 8 * rank + file;
+        return (8 * rank) + file;
     }
+
 
     // Forsyth-Edwards Notation (FEN)
     // https://www.chessprogramming.org/Forsyth-Edwards_Notation
@@ -288,18 +287,18 @@ public class ChessBoard implements IBoardBitboard {
         List<Integer> bRookSquares = convertBitboardToSquareIndex(toBinaryString64(bRook));
         List<Integer> bKingSquares = convertBitboardToSquareIndex(toBinaryString64(bKing));
 
-        for (int squareIndex : wRookSquares) gui.setPiece(squareIndex, "white_rook");
-        for (int squareIndex : wPawnSquares) gui.setPiece(squareIndex, "white_pawn");
-        for (int squareIndex : wKingSquares) gui.setPiece(squareIndex, "white_king");
-        for (int squareIndex : wQueenSquares) gui.setPiece(squareIndex, "white_queen");
-        for (int squareIndex : wBishopSquares) gui.setPiece(squareIndex, "white_bishop");
-        for (int squareIndex : wKnightSquares) gui.setPiece(squareIndex, "white_knight");
+        for (int squareIndex : wRookSquares) gui.setPiece(squareIndex, "wr");
+        for (int squareIndex : wPawnSquares) gui.setPiece(squareIndex, "wp");
+        for (int squareIndex : wKingSquares) gui.setPiece(squareIndex, "wk");
+        for (int squareIndex : wQueenSquares) gui.setPiece(squareIndex, "wq");
+        for (int squareIndex : wBishopSquares) gui.setPiece(squareIndex, "wb");
+        for (int squareIndex : wKnightSquares) gui.setPiece(squareIndex, "wn");
 
-        for (int squareIndex : bRookSquares) gui.setPiece(squareIndex, "black_rook");
-        for (int squareIndex : bPawnSquares) gui.setPiece(squareIndex, "black_pawn");
-        for (int squareIndex : bKingSquares) gui.setPiece(squareIndex, "black_king");
-        for (int squareIndex : bQueenSquares) gui.setPiece(squareIndex, "black_queen");
-        for (int squareIndex : bBishopSquares) gui.setPiece(squareIndex, "black_bishop");
-        for (int squareIndex : bKnightSquares) gui.setPiece(squareIndex, "black_knight");
+        for (int squareIndex : bRookSquares) gui.setPiece(squareIndex, "br");
+        for (int squareIndex : bPawnSquares) gui.setPiece(squareIndex, "bp");
+        for (int squareIndex : bKingSquares) gui.setPiece(squareIndex, "bk");
+        for (int squareIndex : bQueenSquares) gui.setPiece(squareIndex, "bq");
+        for (int squareIndex : bBishopSquares) gui.setPiece(squareIndex, "bb");
+        for (int squareIndex : bKnightSquares) gui.setPiece(squareIndex, "bn");
     }
 }

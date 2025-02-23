@@ -5,7 +5,8 @@ import javax.imageio.ImageIO;
 import java.io.IOException;
 
 public class GUI {
-    static final Color BACKGROUND = new Color(44, 165, 141);
+    static final Color green = new Color(44, 165, 141);
+    static final Color BACKGROUND = green;
 
     JFrame frame;
     JPanel panel;

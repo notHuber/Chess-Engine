@@ -1,6 +1,6 @@
 public class Main {
     public static void main(String[] args){
-        String startingPositionFEN = "r1bqkbnr/ppnp1p1p/8/4p3/3P4/5N2/PPP1PPPP/RNBQKB1R w KQkq - 0 1";
+        String startingPositionFEN = "r1bqkbnr/ppp1pppp/2n5/3P4/8/8/PPPP1PPP/RNBQKBNR w KQkq - 1 3";
         ChessBoard board = new ChessBoard(startingPositionFEN);
         board.printBitboards();
         board.getBoardInfo();
