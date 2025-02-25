@@ -38,7 +38,7 @@ public class GUI {
     public void setPiece(int index, String piece) {
         board.get(index).setText(piece);
         try {
-            Image img = ImageIO.read(getClass().getResource("/images/" + piece + ".png"));
+            Image img = ImageIO.read(getClass().getResource("/images/pieces/" + piece + ".png"));
             board.get(index).setIcon(new ImageIcon(img));
         } catch (IOException e) {
             e.printStackTrace();

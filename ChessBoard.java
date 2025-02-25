@@ -42,6 +42,38 @@ public class ChessBoard implements IBoardBitboard {
     // En passant capture square
     int enPassantCaptureSquare;
 
+    public long rookAttack(long bitboard, int squarePosition){
+        String coordinate = convertSquarePositionToCord(squarePosition);
+        int rank = Integer.parseInt(coordinate.substring(1));
+        int file = Files.valueOf(coordinate.substring(0,1)).file;
+
+        int upSpace = 8 - rank;
+        int downSpace = rank - 1;
+        int rightSpace = 8 - file;
+        int leftSpace = file - 1;
+
+        // store the pseudo legal moves of the rook moving piece
+        long tempBitboard = setBitboard(0L, rank - 1, file - 1);
+        long upBitboard = tempBitboard;
+        long downBitboard = tempBitboard;
+        long rightBitboard = tempBitboard;
+        long leftBitboard = tempBitboard;
+
+
+        for (int i = 0; i < upSpace; i++){upBitboard |= upBitboard << 8;}
+        for (int i = 0; i < downSpace; i++){downBitboard = downBitboard | (downBitboard >>> 8);}
+        for (int i = 0; i < rightSpace; i++){rightBitboard |= rightBitboard << 1;}
+        for (int i = 0; i < leftSpace; i++){leftBitboard |= leftBitboard >> 1;}
+
+        long pseudoLegalMovesRook = bitboard ^ (downBitboard | upBitboard | leftBitboard | rightBitboard);
+        return pseudoLegalMovesRook;
+    }
+
+
+
+
+
+
     public enum Files {
         a(1),
         b(2),
@@ -218,7 +250,7 @@ public class ChessBoard implements IBoardBitboard {
     }
 
     // ex. 0000000000000000000000000000000000000000000000001111111100000000 --> "[48, 49, 50, 51, 52, 53, 54, 55]"
-    public List<Integer> convertBitboardToSquareIndex(String bitboard) {
+    public List<Integer> convertBitboardToSquareIndexArray(String bitboard) {
         List<Integer> squareIndices = new ArrayList<>();
         for (int i = 0; i < bitboard.length(); i++) {
             if (bitboard.charAt(i) == '1') {
@@ -271,21 +303,21 @@ public class ChessBoard implements IBoardBitboard {
         System.out.println("Bitboard with every piece: " + Long.toBinaryString(bitboardOfAllPieces));
     }
 
-    // TODO: Fix the king and queen's  position
+    // TODO: reduce dependencies
     public void createBoard() {
         GUI gui = new GUI();
-        List<Integer> wPawnSquares = convertBitboardToSquareIndex(toBinaryString64(wPawn));
-        List<Integer> wKnightSquares = convertBitboardToSquareIndex(toBinaryString64(wKnight));
-        List<Integer> wBishopSquares = convertBitboardToSquareIndex(toBinaryString64(wBishop));
-        List<Integer> wQueenSquares = convertBitboardToSquareIndex(toBinaryString64(wQueen));
-        List<Integer> wRookSquares = convertBitboardToSquareIndex(toBinaryString64(wRook));
-        List<Integer> wKingSquares = convertBitboardToSquareIndex(toBinaryString64(wKing));
-        List<Integer> bPawnSquares = convertBitboardToSquareIndex(toBinaryString64(bPawn));
-        List<Integer> bKnightSquares = convertBitboardToSquareIndex(toBinaryString64(bKnight));
-        List<Integer> bBishopSquares = convertBitboardToSquareIndex(toBinaryString64(bBishop));
-        List<Integer> bQueenSquares = convertBitboardToSquareIndex(toBinaryString64(bQueen));
-        List<Integer> bRookSquares = convertBitboardToSquareIndex(toBinaryString64(bRook));
-        List<Integer> bKingSquares = convertBitboardToSquareIndex(toBinaryString64(bKing));
+        List<Integer> wPawnSquares = convertBitboardToSquareIndexArray(toBinaryString64(wPawn));
+        List<Integer> wKnightSquares = convertBitboardToSquareIndexArray(toBinaryString64(wKnight));
+        List<Integer> wBishopSquares = convertBitboardToSquareIndexArray(toBinaryString64(wBishop));
+        List<Integer> wQueenSquares = convertBitboardToSquareIndexArray(toBinaryString64(wQueen));
+        List<Integer> wRookSquares = convertBitboardToSquareIndexArray(toBinaryString64(wRook));
+        List<Integer> wKingSquares = convertBitboardToSquareIndexArray(toBinaryString64(wKing));
+        List<Integer> bPawnSquares = convertBitboardToSquareIndexArray(toBinaryString64(bPawn));
+        List<Integer> bKnightSquares = convertBitboardToSquareIndexArray(toBinaryString64(bKnight));
+        List<Integer> bBishopSquares = convertBitboardToSquareIndexArray(toBinaryString64(bBishop));
+        List<Integer> bQueenSquares = convertBitboardToSquareIndexArray(toBinaryString64(bQueen));
+        List<Integer> bRookSquares = convertBitboardToSquareIndexArray(toBinaryString64(bRook));
+        List<Integer> bKingSquares = convertBitboardToSquareIndexArray(toBinaryString64(bKing));
 
         for (int squareIndex : wRookSquares) gui.setPiece(squareIndex, "wr");
         for (int squareIndex : wPawnSquares) gui.setPiece(squareIndex, "wp");
