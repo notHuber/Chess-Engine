@@ -51,8 +51,8 @@ public class GUI {
 
             // Se le dimensioni del pulsante non sono ancora determinate, usa dimensioni predefinite
             if (buttonWidth == 0 || buttonHeight == 0) {
-                buttonWidth = 60; // Larghezza predefinita
-                buttonHeight = 60; // Altezza predefinita
+                buttonWidth = 90; // Larghezza predefinita
+                buttonHeight = 90; // Altezza predefinita
             }
 
             // Ridimensiona l'immagine per adattarla al pulsante
