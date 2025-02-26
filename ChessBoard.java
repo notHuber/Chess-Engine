@@ -11,18 +11,18 @@ interface IBoardBitboard {
 }
 
 public class ChessBoard implements IBoardBitboard {
-    private long wPawn   = 0L;
-    private long wRook   = 0L;
-    private long wKnight = 0L;
-    private long wBishop = 0L;
-    private long wQueen  = 0L;
-    private long wKing   = 0L;
-    private long bPawn   = 0L;
-    private long bRook   = 0L;
-    private long bKnight = 0L;
-    private long bBishop = 0L;
-    private long bQueen  = 0L;
-    private long bKing   = 0L;
+    public long wPawn   = 0L;
+    public long wRook   = 0L;
+    public long wKnight = 0L;
+    public long wBishop = 0L;
+    public long wQueen  = 0L;
+    public long wKing   = 0L;
+    public long bPawn   = 0L;
+    public long bRook   = 0L;
+    public long bKnight = 0L;
+    public long bBishop = 0L;
+    public long bQueen  = 0L;
+    public long bKing   = 0L;
 
     // Side to move
     private boolean whiteToMove;
@@ -81,7 +81,7 @@ public class ChessBoard implements IBoardBitboard {
         for (int i = 0; i < rightSpace; i++){rightBitboard |= rightBitboard << 1;}
         for (int i = 0; i < leftSpace; i++){leftBitboard |= leftBitboard >> 1;}
 
-        return downBitboard | upBitboard | leftBitboard | rightBitboard;
+        return tempBitboard ^ (downBitboard | upBitboard | leftBitboard | rightBitboard);
     }
     public long rookAttack(String coordinate){
         int squarePosition = convertCordToSquarePosition(coordinate);
@@ -144,10 +144,118 @@ public class ChessBoard implements IBoardBitboard {
         int squarePosition = convertCordToSquarePosition(coordinate);
         return bishopAttack(squarePosition);
     }
+    public long queenAttack(int squarePosition){
+        return bishopAttack(squarePosition) | rookAttack(squarePosition);
+    }
+    public long queenAttack(String coordinate){
+        return bishopAttack(coordinate) | rookAttack(coordinate);
+    }
+    public long kingAttack(int squarePosition){
+        String coordinate = convertSquarePositionToCord(squarePosition);
+        int file = Files.valueOf(coordinate.substring(0,1)).file;
+        int rank = Integer.parseInt(coordinate.substring(1));
+        int upSpace = getUpSpaceFromRank(rank);
+        int downSpace = getDownSpaceFromRank(rank);
+        int leftSpace = getLeftSpaceFromFile(file);
+        int rightSpace = getRightSpaceFromFile(file);
+
+        long upBitboard = 0b0L;
+        long downBitboard = 0b0L;
+        long leftBitboard = 0b0L;
+        long rightBitboard = 0b0L;
+        long upRigthB = 0b0L;
+        long upLeftB = 0b0L;
+        long downRightB= 0b0L;
+        long downLeftB = 0b0L;
+
+        if (upSpace > 0)
+            upBitboard |= 1L << (squarePosition + 8);
+        if (downSpace > 0)
+            downBitboard |= 1L << (squarePosition - 8);
+        if (leftSpace > 0){
+            leftBitboard |= 1L << (squarePosition - 1);
+            if (upSpace > 0) upLeftB |= 1L << (squarePosition + 7);
+            if (downSpace >0) downLeftB |= 1L << (squarePosition - 9);
+        }
+        if (rightSpace > 0){
+            rightBitboard |= 1L << (squarePosition + 1);
+            if (upSpace > 0) upRigthB |= 1L << (squarePosition + 9);
+            if (downSpace >0) downRightB |= 1L << (squarePosition -7);
+
+        }
+
+        return upBitboard | downBitboard | rightBitboard | leftBitboard | upLeftB | upRigthB | downLeftB | downRightB;
+    }
+    public long kingAttack(String coordinate){
+        return kingAttack(convertCordToSquarePosition(coordinate));
+    }
+    public long knightAttack(int squarePosition){
+        String coordinate = convertSquarePositionToCord(squarePosition);
+        int file = Files.valueOf(coordinate.substring(0,1)).file;
+        int rank = Integer.parseInt(coordinate.substring(1));
+        int upSpace = getUpSpaceFromRank(rank);
+        int downSpace = getDownSpaceFromRank(rank);
+        int leftSpace = getLeftSpaceFromFile(file);
+        int rightSpace = getRightSpaceFromFile(file);
 
 
+        long upRightB1 = 0L;
+        long upRightB2 = 0L;
+        long upLeftB1 = 0L;
+        long upLeftB2 = 0L;
+        long downRightB1 = 0L;
+        long downRightB2 = 0L;
+        long downLeftB1 = 0L;
+        long downLeftB2 = 0L;
 
+        if (rightSpace > 1){
+            if (upSpace > 0) upRightB1 |= 1L << (squarePosition + 10);
+            if (downSpace > 0) downRightB1 |= 1L << (squarePosition -6);
 
+        }
+        if (rightSpace > 0){
+            if (upSpace > 1) upRightB2 |= 1L << (squarePosition + 17);
+            if (downSpace > 1) downRightB2 |= 1L << (squarePosition -15);
+        }
+        if (leftSpace > 1){
+            if (upSpace > 0) upLeftB1 |= 1L << (squarePosition + 6);
+            if (downSpace > 0) downLeftB1 |= 1L << (squarePosition -10);
+
+        }
+        if (leftSpace > 0){
+            if (upSpace > 1) upLeftB2 |= 1L << (squarePosition + 15);
+            if (downSpace > 1) downLeftB2 |= 1L << (squarePosition -17);
+        }
+
+        return upLeftB1 | upLeftB2 |upRightB1 | upRightB2 | downLeftB1 | downLeftB2 | downRightB1 | downRightB2;
+    }
+    public long knightAttack(String coordinate){
+        return knightAttack(convertCordToSquarePosition(coordinate));
+    }
+    public long pawnAttack(int squarePosition, boolean movingForward){
+        String coordinate = convertSquarePositionToCord(squarePosition);
+        int file = Files.valueOf(coordinate.substring(0,1)).file;
+        int rank = Integer.parseInt(coordinate.substring(1));
+        long attackingPawnBitboard = 0L;
+        if (movingForward){
+            if (rank == 2) {
+                attackingPawnBitboard = 1L << (squarePosition + 8);
+                attackingPawnBitboard |= 1L << (squarePosition + 16);
+            }
+            else attackingPawnBitboard = 1L << (squarePosition + 8);
+        }
+        if (!movingForward){
+            if (rank == 7) {
+                attackingPawnBitboard = 1L << (squarePosition - 8);
+                attackingPawnBitboard |= 1L << (squarePosition - 16);
+            }
+            else attackingPawnBitboard = 1L << (squarePosition - 8);
+        }
+        return attackingPawnBitboard;
+    }
+    public long pawnAttack(String coordinate, boolean movingForward){
+        return pawnAttack(convertCordToSquarePosition(coordinate),movingForward);
+    }
     public enum Files {
         a(1),
         b(2),
@@ -326,11 +434,7 @@ public class ChessBoard implements IBoardBitboard {
     // ex. 0000000000000000000000000000000000000000000000001111111100000000 --> "[48, 49, 50, 51, 52, 53, 54, 55]"
     public List<Integer> convertBitboardToSquareIndexArray(String bitboard) {
         //TODO : update this code with something more useful and more reliable
-        bitboard = getReverse(bitboard.substring(0,8)) + getReverse(bitboard.substring(8,16))  +
-                   getReverse(bitboard.substring(16,24)) + getReverse(bitboard.substring(24,32)) +
-                   getReverse(bitboard.substring(32,40)) + getReverse(bitboard.substring(40,48)) +
-                   getReverse(bitboard.substring(48,56)) + getReverse(bitboard.substring(56,64));
-        System.out.println("\n\n");
+        bitboard = getReadableBitboard(bitboard);
         List<Integer> squareIndices = new ArrayList<>();
         for (int i = 0; i < bitboard.length(); i++) {
             if (bitboard.charAt(i) == '1') {
@@ -347,6 +451,12 @@ public class ChessBoard implements IBoardBitboard {
         }
         return res;
     }
+
+    public String getReadableBitboard(String bitboard){ return
+            getReverse(bitboard.substring(0,8)) + getReverse(bitboard.substring(8,16))  +
+            getReverse(bitboard.substring(16,24)) + getReverse(bitboard.substring(24,32)) +
+            getReverse(bitboard.substring(32,40)) + getReverse(bitboard.substring(40,48)) +
+            getReverse(bitboard.substring(48,56)) + getReverse(bitboard.substring(56,64));}
 
     // TODO: reduce dependencies
     public void createBoard() {
