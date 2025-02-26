@@ -285,11 +285,8 @@ public class ChessBoard implements IBoardBitboard {
 
     /*
      * @param bitboard The piece's 64-bit representation
-     * 
      * @param rankIndex The actual piece's rank minus one
-     * 
      * @param fileIndex The actual piece's column minus one
-     * 
      * @return the updated bitboard
      */
     private long setBitboard(long bitboard, int rankIndex, int fileIndex) { // 0 up to 7 (not from 1 to 8!!)
@@ -438,7 +435,7 @@ public class ChessBoard implements IBoardBitboard {
         List<Integer> squareIndices = new ArrayList<>();
         for (int i = 0; i < bitboard.length(); i++) {
             if (bitboard.charAt(i) == '1') {
-                squareIndices.add(i); 
+                squareIndices.add(i);
             }
         }
         return squareIndices;
@@ -508,7 +505,7 @@ public class ChessBoard implements IBoardBitboard {
     /*
      * Returns the bitboard formatted like a 64-bit binary number
      * Useful for debugging, not that indispensable for the chess program itself.
-     * 
+     *
      * @return the formatted string
      */
     private String toBinaryString64(long bitboard) {
@@ -518,7 +515,7 @@ public class ChessBoard implements IBoardBitboard {
     /*
       Just some very helpful debug code (junk code)
      */
-    public void printBitboards() {
+    public long printBitboards() {
         System.out.println("wPawn:   " + toBinaryString64(wPawn));
         System.out.println("wRook:   " + toBinaryString64(wRook));
         System.out.println("wKnight: " + toBinaryString64(wKnight));
@@ -533,6 +530,8 @@ public class ChessBoard implements IBoardBitboard {
         System.out.println("bKing:   " + toBinaryString64(bKing));
         long bitboardOfAllPieces = wPawn | wRook | wKnight | wBishop | wQueen | wKing | bPawn | bRook | bKnight | bBishop | bQueen | bKing;
         System.out.println("Bitboard with every piece: " + Long.toBinaryString(bitboardOfAllPieces));
+
+        return bitboardOfAllPieces;
     }
 
 }

@@ -1,10 +1,14 @@
-//codice modificato con l'aiuto di chatgpt, da rifare lo stesso, ma almeno ora è bellino
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+
 import javax.imageio.ImageIO;
 import java.io.IOException;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class GUI {
     static final Color GREEN = new Color(44, 165, 141);
@@ -13,6 +17,7 @@ public class GUI {
     JFrame frame;
     JPanel panel;
     ArrayList<JButton> board;
+    Map<JButton, String> pieceNames;
 
     public GUI() {
         frame = new JFrame();
@@ -24,6 +29,7 @@ public class GUI {
         frame.setTitle("Chess Engine");
         frame.setVisible(true);
 
+        pieceNames = new HashMap<>();
         setBoard(BACKGROUND);
     }
 
@@ -35,6 +41,20 @@ public class GUI {
             jb.setMargin(new Insets(0, 0, 0, 0));
             jb.setFocusable(false);
             jb.setBackground((i / 8 + i % 8) % 2 == 0 ? new Color(236, 212, 180) : bg); // Colori alternati
+
+            // Informations about the clicked square
+            jb.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    int index = board.indexOf(jb);
+                    int row = index / 8;
+                    int col = index % 8;
+                    String square = "" + (char) ('a' + col) + (8 - row);
+                    String pieceName = pieceNames.getOrDefault(jb, null); // Get the piece name, or null if not found
+                    System.out.println("Square: " + square + " Piece: " + pieceName);
+                }
+            });
+
             board.add(jb);
             panel.add(jb);
         }
@@ -49,7 +69,8 @@ public class GUI {
             int buttonWidth = board.get(index).getWidth();
             int buttonHeight = board.get(index).getHeight();
 
-            // Se le dimensioni del pulsante non sono ancora determinate, usa dimensioni predefinite
+            // Se le dimensioni del pulsante non sono ancora determinate, usa dimensioni
+            // predefinite
             if (buttonWidth == 0 || buttonHeight == 0) {
                 buttonWidth = 78; // Larghezza predefinita
                 buttonHeight = 78; // Altezza predefinita
@@ -65,8 +86,12 @@ public class GUI {
             g2d.dispose();
 
             // Imposta l'icona sul pulsante
-            board.get(index).setIcon(new ImageIcon(resizedImage));
-            board.get(index).setText(""); // Rimuove il testo del pulsante
+            JButton button = board.get(index);
+            button.setIcon(new ImageIcon(resizedImage));
+            button.setText(""); // Rimuove il testo del pulsante
+
+            // Store the piece name in the map
+            pieceNames.put(button, piece);
         } catch (IOException e) {
             e.printStackTrace();
         }
