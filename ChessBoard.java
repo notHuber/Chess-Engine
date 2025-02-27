@@ -7,6 +7,7 @@ class InvalidFenException extends RuntimeException {}
 // using the BitBoards approach (Piece centric representation)
 interface IBoardBitboard {
     int convertCordToSquarePosition(String coordinate);
+
     String convertSquarePositionToCord(int squareIndex);
 }
 
@@ -42,22 +43,20 @@ public class ChessBoard implements IBoardBitboard {
     // En passant capture square
     int enPassantCaptureSquare;
 
-
     private final int maxRank = 8;
     private final int maxFile = 8;
     private final int minRank = 1;
     private final int minFile = 1;
-    /*
-    Those function work with real life ranks and files (ranks & files starts at 1, end at 8)
-    */
+
+     /*
+        Those function work with real life ranks and files (ranks & files starts at1, end at 8)
+     */
     private int getUpSpaceFromRank(int rank) {return maxRank - rank;}
     private int getDownSpaceFromRank(int rank) {return rank - minRank ;}
     private int getRightSpaceFromFile(int file) {return maxFile - file;}
     private int getLeftSpaceFromFile(int file) {return file - minFile;}
 
-
-
-    public long rookAttack(int squarePosition){
+    public long rookAttack(int squarePosition) {
         String coordinate = convertSquarePositionToCord(squarePosition);
         int file = Files.valueOf(coordinate.substring(0,1)).file;
         int rank = Integer.parseInt(coordinate.substring(1));
@@ -67,6 +66,11 @@ public class ChessBoard implements IBoardBitboard {
         int rightSpace = getRightSpaceFromFile(file);
         int leftSpace = getLeftSpaceFromFile(file);
 
+        long bitboardOfAllPieces = printBitboards();
+        long whitePieces = wPawn | wRook | wKnight | wBishop | wQueen | wKing;
+        long blackPieces = bPawn | bRook | bKnight | bBishop | bQueen | bKing;
+        String pieceColor = getPieceColor(squarePosition);
+
         // store the pseudo legal moves of the rook moving piece
         long tempBitboard  = setBitboard(0L, rank - 1, file - 1);
 
@@ -75,30 +79,71 @@ public class ChessBoard implements IBoardBitboard {
         long rightBitboard = tempBitboard;
         long leftBitboard  = tempBitboard;
 
+        for (int i = 0; i < upSpace; i++) {
+            upBitboard <<= 8;
+            if ((upBitboard & bitboardOfAllPieces) != 0) {
+                if ((pieceColor.equals("white") && (upBitboard & blackPieces) != 0) ||
+                        (pieceColor.equals("black") && (upBitboard & whitePieces) != 0)) {
+                    tempBitboard |= upBitboard; // include the piece that blocks the rook
+                }
+                break;
+            }
+            tempBitboard |= upBitboard;
+        }
+        for (int i = 0; i < downSpace; i++) {
+            downBitboard >>>= 8;
+            if ((downBitboard & bitboardOfAllPieces) != 0) {
+                if ((pieceColor.equals("white") && (downBitboard & blackPieces) != 0) ||
+                        (pieceColor.equals("black") && (downBitboard & whitePieces) != 0)) {
+                    tempBitboard |= downBitboard;
+                }
+                break;
+            }
+            tempBitboard |= downBitboard;
+        }
+        for (int i = 0; i < rightSpace; i++) {
+            rightBitboard <<= 1;
+            if ((rightBitboard & bitboardOfAllPieces) != 0) {
+                if ((pieceColor.equals("white") && (rightBitboard & blackPieces) != 0) ||
+                        (pieceColor.equals("black") && (rightBitboard & whitePieces) != 0)) {
+                    tempBitboard |= rightBitboard;
+                }
+                break;
+            }
+            tempBitboard |= rightBitboard;
+        }
+        for (int i = 0; i < leftSpace; i++) {
+            leftBitboard >>>= 1;
+            if ((leftBitboard & bitboardOfAllPieces) != 0) {
+                if ((pieceColor.equals("white") && (leftBitboard & blackPieces) != 0) ||
+                        (pieceColor.equals("black") && (leftBitboard & whitePieces) != 0)) {
+                    tempBitboard |= leftBitboard;
+                }
+                break;
+            }
+            tempBitboard |= leftBitboard;
+        }
 
-        for (int i = 0; i < upSpace; i++){upBitboard |= upBitboard << 8;}
-        for (int i = 0; i < downSpace; i++){downBitboard = downBitboard | (downBitboard >>> 8);}
-        for (int i = 0; i < rightSpace; i++){rightBitboard |= rightBitboard << 1;}
-        for (int i = 0; i < leftSpace; i++){leftBitboard |= leftBitboard >> 1;}
-
-        return tempBitboard ^ (downBitboard | upBitboard | leftBitboard | rightBitboard);
+        return tempBitboard ^ (1L << squarePosition);
     }
-    public long rookAttack(String coordinate){
+
+    public long rookAttack(String coordinate) {
         int squarePosition = convertCordToSquarePosition(coordinate);
         return rookAttack(squarePosition);
     }
-    public long bishopAttack(int squarePosition){
+
+    public long bishopAttack(int squarePosition) {
         String coordinate = convertSquarePositionToCord(squarePosition);
-        int file = Files.valueOf(coordinate.substring(0,1)).file;
+        int file = Files.valueOf(coordinate.substring(0, 1)).file;
         int rank = Integer.parseInt(coordinate.substring(1));
 
-        int tempUpSpace,tempDownSpace, tempRightSpace ,tempLeftSpace;
+        int tempUpSpace, tempDownSpace, tempRightSpace, tempLeftSpace;
 
         int tempSquarePosition;
 
         /*
-        Attacking Bitboards for all directions
-        */
+         * Attacking Bitboards for all directions
+         */
         long downRigthBitboard = 0L;
         long downLeftBitboard  = 0L;
         long upRightBitboard   = 0L;
@@ -115,7 +160,7 @@ public class ChessBoard implements IBoardBitboard {
         tempSquarePosition = squarePosition;
         tempDownSpace = getDownSpaceFromRank(rank);
         tempLeftSpace = getLeftSpaceFromFile(file);
-        while(tempDownSpace-- > 0 && tempLeftSpace-- > 0) {
+        while (tempDownSpace-- > 0 && tempLeftSpace-- > 0) {
             tempSquarePosition -= 9;
             downLeftBitboard |= 1L << tempSquarePosition;
 
@@ -124,7 +169,7 @@ public class ChessBoard implements IBoardBitboard {
         tempSquarePosition = squarePosition;
         tempUpSpace = getUpSpaceFromRank(rank);
         tempRightSpace = getRightSpaceFromFile(file);
-        while (tempUpSpace-- >0 && tempRightSpace-- > 0){
+        while (tempUpSpace-- > 0 && tempRightSpace-- > 0) {
             tempSquarePosition += 9;
             upRightBitboard |= 1L << tempSquarePosition;
         }
@@ -132,25 +177,29 @@ public class ChessBoard implements IBoardBitboard {
         tempSquarePosition = squarePosition;
         tempUpSpace = getUpSpaceFromRank(rank);
         tempLeftSpace = getLeftSpaceFromFile(file);
-        while (tempUpSpace-- >0 && tempLeftSpace-- > 0){
+        while (tempUpSpace-- > 0 && tempLeftSpace-- > 0) {
             tempSquarePosition += 7;
             upLeftBitboard |= 1L << tempSquarePosition;
         }
 
-        //pseudo legal moves for the bishop moving piece
+        // pseudo legal moves for the bishop moving piece
         return downLeftBitboard | downRigthBitboard | upLeftBitboard | upRightBitboard;
     }
-    public long bishopAttack(String coordinate){
+
+    public long bishopAttack(String coordinate) {
         int squarePosition = convertCordToSquarePosition(coordinate);
         return bishopAttack(squarePosition);
     }
-    public long queenAttack(int squarePosition){
+
+    public long queenAttack(int squarePosition) {
         return bishopAttack(squarePosition) | rookAttack(squarePosition);
     }
-    public long queenAttack(String coordinate){
+
+    public long queenAttack(String coordinate) {
         return bishopAttack(coordinate) | rookAttack(coordinate);
     }
-    public long kingAttack(int squarePosition){
+
+    public long kingAttack(int squarePosition) {
         String coordinate = convertSquarePositionToCord(squarePosition);
         int file = Files.valueOf(coordinate.substring(0,1)).file;
         int rank = Integer.parseInt(coordinate.substring(1));
@@ -159,45 +208,50 @@ public class ChessBoard implements IBoardBitboard {
         int leftSpace = getLeftSpaceFromFile(file);
         int rightSpace = getRightSpaceFromFile(file);
 
-        long upBitboard = 0b0L;
-        long downBitboard = 0b0L;
-        long leftBitboard = 0b0L;
+        long upBitboard    = 0b0L;
+        long downBitboard  = 0b0L;
+        long leftBitboard  = 0b0L;
         long rightBitboard = 0b0L;
-        long upRigthB = 0b0L;
-        long upLeftB = 0b0L;
-        long downRightB= 0b0L;
-        long downLeftB = 0b0L;
+        long upRigthB      = 0b0L;
+        long upLeftB       = 0b0L;
+        long downRightB    = 0b0L;
+        long downLeftB     = 0b0L;
 
         if (upSpace > 0)
             upBitboard |= 1L << (squarePosition + 8);
         if (downSpace > 0)
             downBitboard |= 1L << (squarePosition - 8);
-        if (leftSpace > 0){
+        if (leftSpace > 0) {
             leftBitboard |= 1L << (squarePosition - 1);
-            if (upSpace > 0) upLeftB |= 1L << (squarePosition + 7);
-            if (downSpace >0) downLeftB |= 1L << (squarePosition - 9);
+            if (upSpace > 0)
+                upLeftB |= 1L << (squarePosition + 7);
+            if (downSpace > 0)
+                downLeftB |= 1L << (squarePosition - 9);
         }
-        if (rightSpace > 0){
+        if (rightSpace > 0) {
             rightBitboard |= 1L << (squarePosition + 1);
-            if (upSpace > 0) upRigthB |= 1L << (squarePosition + 9);
-            if (downSpace >0) downRightB |= 1L << (squarePosition -7);
+            if (upSpace > 0)
+                upRigthB |= 1L << (squarePosition + 9);
+            if (downSpace > 0)
+                downRightB |= 1L << (squarePosition - 7);
 
         }
 
         return upBitboard | downBitboard | rightBitboard | leftBitboard | upLeftB | upRigthB | downLeftB | downRightB;
     }
-    public long kingAttack(String coordinate){
+
+    public long kingAttack(String coordinate) {
         return kingAttack(convertCordToSquarePosition(coordinate));
     }
-    public long knightAttack(int squarePosition){
+
+    public long knightAttack(int squarePosition) {
         String coordinate = convertSquarePositionToCord(squarePosition);
-        int file = Files.valueOf(coordinate.substring(0,1)).file;
+        int file = Files.valueOf(coordinate.substring(0, 1)).file;
         int rank = Integer.parseInt(coordinate.substring(1));
         int upSpace = getUpSpaceFromRank(rank);
         int downSpace = getDownSpaceFromRank(rank);
         int leftSpace = getLeftSpaceFromFile(file);
         int rightSpace = getRightSpaceFromFile(file);
-
 
         long upRightB1 = 0L;
         long upRightB2 = 0L;
@@ -208,43 +262,53 @@ public class ChessBoard implements IBoardBitboard {
         long downLeftB1 = 0L;
         long downLeftB2 = 0L;
 
-        if (rightSpace > 1){
-            if (upSpace > 0) upRightB1 |= 1L << (squarePosition + 10);
-            if (downSpace > 0) downRightB1 |= 1L << (squarePosition -6);
+        if (rightSpace > 1) {
+            if (upSpace > 0)
+                upRightB1 |= 1L << (squarePosition + 10);
+            if (downSpace > 0)
+                downRightB1 |= 1L << (squarePosition - 6);
 
         }
-        if (rightSpace > 0){
-            if (upSpace > 1) upRightB2 |= 1L << (squarePosition + 17);
-            if (downSpace > 1) downRightB2 |= 1L << (squarePosition -15);
+        if (rightSpace > 0) {
+            if (upSpace > 1)
+                upRightB2 |= 1L << (squarePosition + 17);
+            if (downSpace > 1)
+                downRightB2 |= 1L << (squarePosition - 15);
         }
-        if (leftSpace > 1){
-            if (upSpace > 0) upLeftB1 |= 1L << (squarePosition + 6);
-            if (downSpace > 0) downLeftB1 |= 1L << (squarePosition -10);
+        if (leftSpace > 1) {
+            if (upSpace > 0)
+                upLeftB1 |= 1L << (squarePosition + 6);
+            if (downSpace > 0)
+                downLeftB1 |= 1L << (squarePosition - 10);
 
         }
-        if (leftSpace > 0){
-            if (upSpace > 1) upLeftB2 |= 1L << (squarePosition + 15);
-            if (downSpace > 1) downLeftB2 |= 1L << (squarePosition -17);
+        if (leftSpace > 0) {
+            if (upSpace > 1)
+                upLeftB2 |= 1L << (squarePosition + 15);
+            if (downSpace > 1)
+                downLeftB2 |= 1L << (squarePosition - 17);
         }
 
-        return upLeftB1 | upLeftB2 |upRightB1 | upRightB2 | downLeftB1 | downLeftB2 | downRightB1 | downRightB2;
+        return upLeftB1 | upLeftB2 | upRightB1 | upRightB2 | downLeftB1 | downLeftB2 | downRightB1 | downRightB2;
     }
-    public long knightAttack(String coordinate){
+
+    public long knightAttack(String coordinate) {
         return knightAttack(convertCordToSquarePosition(coordinate));
     }
-    public long pawnAttack(int squarePosition, boolean movingForward){
+
+    public long pawnAttack(int squarePosition, boolean movingForward) {
         String coordinate = convertSquarePositionToCord(squarePosition);
-        int file = Files.valueOf(coordinate.substring(0,1)).file;
+        int file = Files.valueOf(coordinate.substring(0, 1)).file;
         int rank = Integer.parseInt(coordinate.substring(1));
         long attackingPawnBitboard = 0L;
-        if (movingForward){
+        if (movingForward) {
             if (rank == 2) {
                 attackingPawnBitboard = 1L << (squarePosition + 8);
                 attackingPawnBitboard |= 1L << (squarePosition + 16);
             }
             else attackingPawnBitboard = 1L << (squarePosition + 8);
         }
-        if (!movingForward){
+        if (!movingForward) {
             if (rank == 7) {
                 attackingPawnBitboard = 1L << (squarePosition - 8);
                 attackingPawnBitboard |= 1L << (squarePosition - 16);
@@ -253,9 +317,11 @@ public class ChessBoard implements IBoardBitboard {
         }
         return attackingPawnBitboard;
     }
-    public long pawnAttack(String coordinate, boolean movingForward){
-        return pawnAttack(convertCordToSquarePosition(coordinate),movingForward);
+
+    public long pawnAttack(String coordinate, boolean movingForward) {
+        return pawnAttack(convertCordToSquarePosition(coordinate), movingForward);
     }
+
     public enum Files {
         a(1),
         b(2),
@@ -284,9 +350,12 @@ public class ChessBoard implements IBoardBitboard {
     }
 
     /*
-     * @param bitboard The piece's 64-bit representation
+     * @param bitboard The piece's 3-bit representation
+     *
      * @param rankIndex The actual piece's rank minus one
+     *
      * @param fileIndex The actual piece's column minus one
+     *
      * @return the updated bitboard
      */
     private long setBitboard(long bitboard, int rankIndex, int fileIndex) { // 0 up to 7 (not from 1 to 8!!)
@@ -298,7 +367,6 @@ public class ChessBoard implements IBoardBitboard {
     private int lsf(int rank, int file) {
         return (8 * rank) + file;
     }
-
 
     // Forsyth-Edwards Notation (FEN)
     // https://www.chessprogramming.org/Forsyth-Edwards_Notation
@@ -404,6 +472,19 @@ public class ChessBoard implements IBoardBitboard {
         fullMoveClock = Integer.parseInt(fullMoveClockSTR);
     }
 
+    public String getPieceColor(int squarePosition) {
+        long whitePieces = wPawn | wRook | wKnight | wBishop | wQueen | wKing;
+        long blackPieces = bPawn | bRook | bKnight | bBishop | bQueen | bKing;
+
+        if ((whitePieces & (1L << squarePosition)) != 0) {
+            return "white";
+        } else if ((blackPieces & (1L << squarePosition)) != 0) {
+            return "black";
+        } else {
+            return "empty";
+        }
+    }
+
     // ex. "h8" --> 63
     public int convertCordToSquarePosition(String coordinate) {
         String columnStr = coordinate.substring(0, 1);
@@ -428,9 +509,10 @@ public class ChessBoard implements IBoardBitboard {
         return coordinate + rank;
     }
 
-    // ex. 0000000000000000000000000000000000000000000000001111111100000000 --> "[48, 49, 50, 51, 52, 53, 54, 55]"
+    // ex. 0000000000000000000000000000000000000000000000001111111100000000 -->
+    // "[48, 49, 50, 51, 52, 53, 54, 55]"
     public List<Integer> convertBitboardToSquareIndexArray(String bitboard) {
-        //TODO : update this code with something more useful and more reliable
+        // TODO : update this code with something more useful and more reliable
         bitboard = getReadableBitboard(bitboard);
         List<Integer> squareIndices = new ArrayList<>();
         for (int i = 0; i < bitboard.length(); i++) {
@@ -440,10 +522,12 @@ public class ChessBoard implements IBoardBitboard {
         }
         return squareIndices;
     }
-    // TODO: create a new class with static methods (getReverse even though it's for a temporary fix, it shouldn't be here)
-    public String getReverse(String str){
+
+    // TODO: create a new class with static methods (getReverse even though it's for
+    // a temporary fix, it shouldn't be here)
+    public String getReverse(String str) {
         String res = "";
-        for (int i = str.length() -1; i >= 0; i--) {
+        for (int i = str.length() - 1; i >= 0; i--) {
             res += str.charAt(i);
         }
         return res;
@@ -454,6 +538,7 @@ public class ChessBoard implements IBoardBitboard {
             getReverse(bitboard.substring(16,24)) + getReverse(bitboard.substring(24,32)) +
             getReverse(bitboard.substring(32,40)) + getReverse(bitboard.substring(40,48)) +
             getReverse(bitboard.substring(48,56)) + getReverse(bitboard.substring(56,64));}
+
 
     // TODO: reduce dependencies
     public void createBoard() {
@@ -485,9 +570,6 @@ public class ChessBoard implements IBoardBitboard {
         for (int squareIndex : bBishopSquares) gui.setPiece(squareIndex, "bb");
         for (int squareIndex : bKnightSquares) gui.setPiece(squareIndex, "bn");
     }
-
-
-
 
     // Debugging stuff (under this line of code ONLY debugging stuff)
     public void getBoardInfo() {
@@ -533,5 +615,4 @@ public class ChessBoard implements IBoardBitboard {
 
         return bitboardOfAllPieces;
     }
-
 }

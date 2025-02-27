@@ -8,11 +8,10 @@ public class Main {
         // while (sc.hasNextLine()){
         // new ChessBoard(sc.nextLine()).createBoard();
         // }
-        ChessBoard board = new ChessBoard("n7/8/8/p5k1/8/8/8/8 w KQkq - 0 1");
-        board.wRook |= board.rookAttack("d5");
+        ChessBoard board = new ChessBoard("8/4P1q1/8/b1n1R3/8/4p3/4p3/8 w - - 0 1");
+        board.wRook |= board.rookAttack("e5");
         board.createBoard();
         // board.printBitboards();
         // board.getBoardInfo();
-        board.printBitboards();
     }
 }
